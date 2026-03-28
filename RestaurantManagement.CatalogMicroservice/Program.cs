@@ -86,11 +86,10 @@ app.UseCors(opt =>
        .WithOrigins("http://localhost:7260", "http://localhost:7260"); 
 });
 
-if (app.Environment.IsDevelopment())
-{
+
     app.UseSwagger();
     app.UseSwaggerUI();
-}
+
 
 app.UseHttpsRedirection();
 
