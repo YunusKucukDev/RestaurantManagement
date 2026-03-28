@@ -1,0 +1,144 @@
+﻿@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+
+@{
+    var activeShift = HttpContextAccessor.HttpContext.Session.GetString("ActiveShift") ?? "Gunduz";
+    bool hideShift = ViewBag.HideShiftButtons == true;
+}
+
+<!DOCTYPE html>
+<html dir="ltr" lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kasa Yönetim Sistemi</title>
+    <link href="~/matrix-admin-master/assets/libs/flot/css/float-chart.css" rel="stylesheet">
+    <link href="~/matrix-admin-master/dist/css/style.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <style>
+        /* Matrix Admin'in varsayılan boşluklarını sıfırlayalım */
+        .topbar {
+            position: fixed;
+            width: 100%;
+            z-index: 1050;
+        }
+
+        /* Sol Menü Ayarı */
+        .left-sidebar {
+            position: fixed;
+            z-index: 10;
+            transition: 0.2s ease-in;
+            /* Vardiya butonları varken 55px, yokken 0px yukarıdan başla */
+            top: @(hideShift ? "0px" : "55px") !important;
+        }
+
+        /* Ana İçerik Alanı Ayarı */
+        .page-wrapper {
+            background: #eeeeee;
+            position: relative;
+            transition: 0.2s ease-in;
+            min-height: 100vh !important;
+            /* Vardiya butonları varken 55px, yokken 0px pay bırak */
+            padding-top: @(hideShift ? "0px" : "55px") !important;
+            margin-left: 250px; /* Sidebar genişliği */
+        }
+
+        .shift-nav-link {
+            height: 55px;
+            font-size: 14px;
+            letter-spacing: 1px;
+            border: none;
+        }
+
+        /* Sidebar içindeki linklerin hizasını düzeltelim */
+        .sidebar-nav ul li a {
+            padding: 10px 15px !important;
+        }
+
+        .transition-all {
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="preloader">
+        <div class="lds-ripple">
+            <div class="lds-pos"></div>
+            <div class="lds-pos"></div>
+        </div>
+    </div>
+
+    <div id="main-wrapper" data-layout="vertical" data-navbarbg="skin5" data-sidebartype="full" data-sidebar-position="fixed" data-header-position="fixed">
+
+        @if (!hideShift)
+        {
+            @* ÜST VARDİYA NAVİGASYONU *@
+            <header class="topbar" data-navbarbg="skin5">
+                <nav class="navbar top-navbar navbar-expand-md navbar-dark p-0">
+                    <div class="d-flex w-100 shadow-sm border-bottom">
+                        <a href="/Shift/SetShift?type=Gunduz"
+                           class="flex-fill d-flex align-items-center justify-content-center text-decoration-none transition-all shift-nav-link @(activeShift == "Gunduz" ? "bg-warning text-dark fw-bold" : "bg-light text-muted opacity-75")">
+                            <i class="bi bi-sun-fill me-2 fs-5"></i> GÜNDÜZ VARDİYASI
+                        </a>
+                        <a href="/Shift/SetShift?type=Gece"
+                           class="flex-fill d-flex align-items-center justify-content-center text-decoration-none transition-all shift-nav-link @(activeShift == "Gece" ? "bg-dark text-white fw-bold" : "bg-light text-muted opacity-75")">
+                            <i class="bi bi-moon-stars-fill me-2 fs-5"></i> GECE VARDİYASI
+                        </a>
+                    </div>
+                </nav>
+            </header>
+        }
+
+        @* SOL MENÜ *@
+        <aside class="left-sidebar" data-sidebarbg="skin5">
+            <div class="scroll-sidebar">
+                <nav class="sidebar-nav">
+                    <ul id="sidebarnav" class="p-t-30">
+                        <li class="sidebar-item">
+                            <a class="sidebar-link waves-effect waves-dark" asp-controller="Home" asp-action="Index">
+                                <i class="mdi mdi-cash-multiple"></i><span class="hide-menu">Kasa İşlemleri</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a class="sidebar-link waves-effect waves-dark" asp-controller="FixedExpense" asp-action="Index">
+                                <i class="mdi mdi-trending-down"></i><span class="hide-menu">Genel Giderler</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a class="sidebar-link waves-effect waves-dark" asp-controller="Report" asp-action="Index">
+                                <i class="mdi mdi-file-document"></i><span class="hide-menu">Rapor Arşivi</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a class="sidebar-link waves-effect waves-dark" asp-controller="FinalReport" asp-action="Index">
+                                <i class="mdi mdi-file-document"></i><span class="hide-menu">Final Rapor Arşivi</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </aside>
+
+        @* ANA İÇERİK ALANI *@
+        <div class="page-wrapper">
+            <div class="container-fluid">
+                @* RenderBody içeriğini sarmalayan üst boşluk *@
+                <div class="p-t-20">
+                    @RenderBody()
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/matrix-admin-master/assets/libs/jquery/dist/jquery.min.js"></script>
+    <script src="~/matrix-admin-master/assets/libs/popper.js/dist/umd/popper.min.js"></script>
+    <script src="~/matrix-admin-master/assets/libs/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="~/matrix-admin-master/assets/libs/perfect-scrollbar/dist/perfect-scrollbar.jquery.min.js"></script>
+    <script src="~/matrix-admin-master/dist/js/waves.js"></script>
+    <script src="~/matrix-admin-master/dist/js/sidebarmenu.js"></script>
+    <script src="~/matrix-admin-master/dist/js/custom.min.js"></script>
+</body>
+</html>

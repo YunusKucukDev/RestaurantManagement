@@ -1,0 +1,180 @@
+﻿@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@model List<RestaaurantManagement.DtoLayer.Dtos.DailyReport.ResultDailyReportDto>
+
+@{
+    ViewData["Title"] = "Günlük Rapor Arşivi";
+    Layout = "~/Views/UIControler/Index.cshtml";
+    var activeShift = HttpContextAccessor.HttpContext.Session.GetString("ActiveShift") ?? "Gunduz";
+}
+
+<style>
+    .ls-1 {
+        letter-spacing: 1px;
+        font-size: 0.7rem;
+    }
+
+    .card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15) !important;
+    }
+
+    .hover-opacity-100:hover {
+        opacity: 1 !important;
+    }
+    /* Gece modu için yumuşak bir mavi-siyah tonu */
+    .bg-dark {
+        background-color: #1a1d21 !important;
+    }
+</style>
+
+
+<div class="container mt-4">
+    @* Vardiya Bilgilendirme ve Sayayacı *@
+    <div class="d-flex justify-content-between align-items-center m-3">
+        <h3 class="fw-bold mb-0">
+            <i class="bi bi-archive text-primary me-2"></i> Rapor Arşivi
+        </h3>
+        <div class="text-end">
+            <span class="badge bg-success rounded-pill px-4 py-3 shadow-sm text-white" style="font-size: 1rem;">
+                <i class="bi bi-layers-fill me-2"> </i><strong>@Model.Count </strong> Kayıt Listeleniyor
+            </span>
+        </div>
+    </div>
+
+    @* Filtreleme Alanı *@
+    <div class="card border-0 shadow-sm rounded-4 mb-5 mt-3">
+        <div class="card-body p-4">
+            <form method="get" asp-action="Index" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold text-muted text-uppercase">Başlangıç Tarihi</label>
+                    <input type="date" name="start" value="@ViewBag.StartDate" class="form-control rounded-3 border-0 bg-light" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold text-muted text-uppercase">Bitiş Tarihi</label>
+                    <input type="date" name="end" value="@ViewBag.EndDate" class="form-control rounded-3 border-0 bg-light" />
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-success w-100 rounded-3 fw-bold">
+                        <i class="bi bi-filter me-2"></i> Raporları Getir
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @* Analiz Butonu *@
+    <div class="mb-5 text-center">
+        <a id="btnPeriodicalAnalysis" href="#" class="btn btn-outline-danger btn-lg rounded-pill shadow-sm px-5 py-3 fw-bold">
+            <i class="bi bi-graph-up-arrow me-2"></i>
+            Seçili Aralığı Analiz Et (Final Rapor)
+        </a>
+    </div>
+
+    @* Rapor Kartları *@
+    <div class="row g-4">
+        @if (Model != null && Model.Any())
+        {
+            @foreach (var item in Model)
+            {
+                var isDay = item.ShiftType == "Gunduz";
+
+                <div class="col-md-4 mb-4">
+                    <div class="card border-0 shadow-lg rounded-4 h-100 @(isDay ? "bg-white" : "bg-dark text-white")" style="transition: transform 0.3s ease;">
+
+                        @* Üst Şerit (Kar/Zarar Durumuna Göre Glow Etkisi) *@
+                        <div class="position-absolute top-0 start-0 w-100" style="height: 4px; background: @(item.NetProfit >= 0 ? "linear-gradient(90deg, #00b09b, #96c93d)" : "linear-gradient(90deg, #ff416c, #ff4b2b)")"></div>
+
+                        <div class="card-body p-4">
+                            @* Başlık Bölümü *@
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center @(isDay ? "bg-warning text-dark" : "bg-primary text-white")" style="width: 45px; height: 45px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                                        <i class="bi @(isDay ? "bi-sun-fill" : "bi-moon-stars-fill") fs-5"></i> 
+                                    </div>
+                                    <div class="ms-3">
+                                        <h6 class="mb-0 fw-bold @(isDay ? "text-dark" : "text-white")">@item.Date.ToString("dd MMMM yyyy")</h6>
+                                        <small class="@(isDay ? "text-muted" : "text-white-50") text-uppercase ls-1"> @item.ShiftType Vardiyası</small>
+                                    </div>
+                                </div>
+                                @* Silme Butonu (Sağ Üst Köşede Zarif) *@
+                                <a href="/Report/DeleteDailyReport/@item.Id" class="text-danger opacity-50 hover-opacity-100">
+                                    <i class="bi bi-x-circle-fill fs-4"></i>
+                                </a>
+                            </div>
+
+                            @* Ana Rakam (Net Kar) *@
+                            <div class="text-center py-3">
+                                <span class="d-block small text-uppercase fw-semibold @(isDay ? "text-muted" : "text-white-50") mb-1">Net Kar / Zarar</span>
+                                <h2 class="display-6 fw-bold @(item.NetProfit >= 0 ? "text-success" : "text-danger")" style="letter-spacing: -1px;">
+                                    @item.NetProfit.ToString("C2")
+                                </h2>
+                            </div>
+
+                            @* Detay Bilgiler (Özet Table Görünümü) *@
+                            <div class="rounded-3 p-3 mb-4 @(isDay ? "bg-light" : "bg-white bg-opacity-10") border @(isDay ? "border-0" : "border-secondary")">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="small @(isDay ? "text-muted" : "text-black-50")">Toplam Gelir</span>
+                                    <span class="fw-bold text-success">+@item.TotalIncome.ToString("N2") ₺</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span class="small @(isDay ? "text-muted" : "text-black-50")">Toplam Gider</span>
+                                    <span class="fw-bold text-danger">-@item.TotalOutcome.ToString("N2") ₺</span>
+                                </div>
+                            </div>
+
+                           @* Aksiyon Butonu *@
+                            <a href="@Url.Action("SelectFixedExpenses", "Report", new { 
+                                startDate = item.Date.ToString("yyyy-MM-dd"), 
+                                endDate = item.Date.ToString("yyyy-MM-dd"), 
+                                ShiftType = (isDay ? "Gunduz" : "Gece") // isDay true ise Gunduz, değilse Aksam gönderir
+                            })"
+                               class="btn @(isDay ? "btn-outline-dark" : "btn-primary") w-100 rounded-pill py-2 fw-bold d-flex align-items-center justify-content-center">
+                                <i class="bi bi-file-earmark-bar-graph me-2"></i> 
+                                @(isDay ? "Gündüz Verilerini Gör" : "Gece Verilerini Gör")
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-12 text-center py-5 bg-white rounded-4 shadow-sm">
+                <i class="bi bi-search display-1 text-muted opacity-25"></i>
+                <p class="mt-3 text-muted fw-bold">@activeShift vardiyası için seçili tarihlerde bir rapor kaydı bulunamadı.</p>
+                <a href="/Home/Index" class="btn btn-sm btn-outline-primary rounded-pill px-4">Kasa Sayfasına Git</a>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .card {
+        transition: all 0.3s ease;
+        border: 1px solid rgba(0,0,0,0.05) !important;
+    }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
+        }
+
+    .bg-warning-subtle {
+        background-color: #fff3cd;
+        color: #664d03;
+    }
+</style>
+
+<script>
+    document.getElementById('btnPeriodicalAnalysis').addEventListener('click', function(e) {
+        e.preventDefault();
+        let start = document.getElementsByName('start')[0].value;
+        let end = document.getElementsByName('end')[0].value;
+        if(start && end) {
+            window.location.href = `/Report/PeriodicalAnalysis?start=${start}&end=${end}`;
+        } else {
+            alert("Analiz için lütfen tarih aralığı seçin!");
+        }
+    });
+</script>

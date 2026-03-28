@@ -1,0 +1,114 @@
+﻿@using RestaaurantManagement.DtoLayer.Dtos.IncomeDto
+@using RestaaurantManagement.DtoLayer.Dtos.OutcomeDto
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+
+@{
+    ViewData["Title"] = "Günlük Kasa";
+    Layout = "~/Views/UIControler/Index.cshtml";
+    // Aktif vardiyayı alıyoruz
+    var activeShift = HttpContextAccessor.HttpContext.Session.GetString("ActiveShift") ?? "Gunduz";
+}
+
+<div class="container mt-4">
+    <div class="alert @(activeShift == "Gunduz" ? "alert-warning" : "alert-dark") shadow-sm rounded-4 mb-4 d-flex justify-content-between align-items-center">
+        <div>
+            <i class="bi @(activeShift == "Gunduz" ? "bi-sun-fill" : "bi-moon-stars-fill") me-2"></i>
+            <strong>@activeShift.ToUpper() VARDİYASI KASASI</strong>
+        </div>
+        <span class="badge bg-light text-dark rounded-pill">@(((DateTime)ViewBag.RawDate).ToLongDateString())</span>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+            <div class="row align-items-end">
+                <div class="col-md-4">
+                    <form method="get" id="dateFilterForm">
+                        <label class="form-label small fw-bold text-muted">Tarih Değiştir</label>
+                        <input type="date" name="selectedDate" class="form-control rounded-pill shadow-none"
+                               value="@ViewBag.SelectedDate" onchange="this.form.submit()" />
+                    </form>
+                </div>
+
+                <div class="col-md-8 text-end">
+                    @if (ViewBag.IsReported)
+                    {
+                        <div class="alert alert-success d-inline-block py-2 px-4 rounded-pill mb-0 border-0 shadow-sm">
+                            <i class="bi bi-check-circle-fill me-2"></i>Bu vardiyanın raporu arşivlendi.
+                        </div>
+                    }
+                    else
+                    {
+                        <form asp-controller="Report" asp-action="CloseDay" method="post" class="d-inline">
+                            <input type="hidden" name="reportDate" value="@ViewBag.SelectedDate" />
+                            <button type="submit" class="btn @(activeShift == "Gunduz" ? "btn-warning" : "btn-primary") rounded-pill px-4 shadow-sm fw-bold">
+                                <i class="bi bi-archive-fill me-2"></i>@activeShift.ToUpper() Kasasını Kapat
+                            </button>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card bg-success text-white shadow-sm border-0 rounded-4 overflow-hidden position-relative">
+                <div class="card-body p-4 text-center">
+                    <h6 class="text-uppercase small fw-bold opacity-75">Gelirler</h6>
+                    <h2 class="mb-0 fw-bold">@(((decimal)ViewBag.TotalIncome).ToString("C2"))</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card bg-danger text-white shadow-sm border-0 rounded-4 overflow-hidden position-relative">
+                <div class="card-body p-4 text-center">
+                    <h6 class="text-uppercase small fw-bold opacity-75">Giderler</h6>
+                    <h2 class="mb-0 fw-bold">@(((decimal)ViewBag.TotalOutcome).ToString("C2"))</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card @(ViewBag.FinalIncome >= 0 ? (activeShift == "Gunduz" ? "bg-warning text-dark" : "bg-primary") : "bg-dark") text-white shadow-sm border-0 rounded-4 overflow-hidden position-relative">
+                <div class="card-body p-4 text-center">
+                    <h6 class="text-uppercase small fw-bold @(activeShift == "Gunduz" && ViewBag.FinalIncome >= 0 ? "text-dark opacity-75" : "opacity-75")">Vardiya Bakiyesi</h6>
+                    <h2 class="mb-0 fw-bold">@(((decimal)ViewBag.FinalIncome).ToString("C2"))</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 p-4 border-top border-5 border-success">
+                <h5 class="fw-bold mb-3 text-success"><i class="bi bi-plus-circle me-2"></i>Gelir Girişi</h5>
+                <partial name="_CreateIncomePartial" model="new CreateInComeDto()" />
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 p-4 border-top border-5 border-danger">
+                <h5 class="fw-bold mb-3 text-danger"><i class="bi bi-dash-circle me-2"></i>Gider Girişi</h5>
+                <partial name="_CreateOutcomePartial" model="new CreateOutcomeDto()" />
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-6">
+            @await Component.InvokeAsync("ListIncome", new { selectedDate = ViewBag.RawDate })
+        </div>
+        <div class="col-md-6">
+            @await Component.InvokeAsync("ListOutcome", new { selectedDate = ViewBag.RawDate })
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Seçilen tarihin vurgusu */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+        cursor: pointer;
+    }
+</style>

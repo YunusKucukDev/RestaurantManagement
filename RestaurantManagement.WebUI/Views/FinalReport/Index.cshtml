@@ -1,0 +1,232 @@
+﻿@using RestaaurantManagement.DtoLayer.Dtos.FinalReportDtos
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@model List<ResultFinalReportDto>
+
+@{
+    ViewData["Title"] = "Rapor Arşivi";
+    Layout = "~/Views/UIControler/Index.cshtml";
+}
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-center align-items-center mb-4">
+        <div>
+            <h3 class="mb-0">
+                <i class="bi bi-journal-check text-primary me-2"></i> Rapor Arşivi
+            </h3>
+
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4 bg-light">
+        <div class="card-body">
+            <form method="get" action="/FinalReport/Index" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold">Başlangıç Tarihi</label>
+                    <input type="date" name="startDate" class="form-control" value="@ViewBag.StartDate">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold">Bitiş Tarihi</label>
+                    <input type="date" name="endDate" class="form-control" value="@ViewBag.EndDate">
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-filter"></i> Filtrele
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 rounded-3">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-success">
+                        <tr>
+                            <th class="ps-4">Rapor Tanımı</th>
+                            <th>Hasılat</th>
+                            <th>Giderler</th>
+                            <th>Net Durum</th>
+                            <th class="text-center">İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var report in Model)
+                            {
+                                var jsonReport = System.Text.Json.JsonSerializer.Serialize(report, new System.Text.Json.JsonSerializerOptions
+                                {
+                                    PropertyNamingPolicy = null
+                                });
+
+                                <tr>
+                                    <td class="ps-4 align-middle fw-medium">
+                                        <i class="bi bi-file-earmark-bar-graph me-2 text-secondary"></i>@report.ReportName
+                                    </td>
+                                    <td class="align-middle text-success fw-bold">@report.TotalRevenue.ToString("N2") ₺</td>
+                                    <td class="align-middle text-danger">@report.TotalExpenses.ToString("N2") ₺</td>
+                                    <td class="align-middle fw-bold @(report.NetTotal < 0 ? "text-danger" : "text-primary")">
+                                        @report.NetTotal.ToString("N2") ₺
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-outline-info" onclick='showReportDetails(@Html.Raw(jsonReport))'>
+                                                <i class="bi bi-eye"></i> Detay
+                                            </button>
+                                            <a href="/FinalReport/DeleteReport/@report.Id" class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center py-5 text-muted">
+                                    <div class="mb-2"><i class="bi bi-inbox fs-1 opacity-25"></i></div>
+                                    kayıtlı bir rapor bulunamadı.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="reportDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-dark text-white rounded-top-4">
+                <h5 class="modal-title"><i class="bi bi-file-earmark-text me-2"></i>Rapor Detay Dökümü</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row g-3 mb-4">
+                    <div class="col-4">
+                        <div class="p-3 bg-light rounded-3 text-center border">
+                            <small class="text-muted d-block">HASILAT</small>
+                            <strong class="text-success fs-5" id="detRev">0 ₺</strong>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-3 bg-light rounded-3 text-center border">
+                            <small class="text-muted d-block">TOPLAM GİDER</small>
+                            <strong class="text-danger fs-5" id="detExp">0 ₺</strong>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-3 rounded-3 text-center border" id="detNetBox">
+                            <small class="text-muted d-block">NET DURUM</small>
+                            <strong class="fs-5" id="detNet">0 ₺</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <h6 class="fw-bold text-success mb-2"><i class="bi bi-plus-circle me-2"></i>Kasa Gelirleri</h6>
+                <div class="table-responsive mb-4 shadow-sm rounded border">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-success">
+                            <tr><th>Gelir</th><th>Tarih</th><th>Vardiya</th><th class="text-end">Tutar</th></tr>
+                        </thead>
+                        <tbody id="detIncBody"></tbody>
+                    </table>
+                </div>
+
+                <h6 class="fw-bold text-danger mb-2"><i class="bi bi-dash-circle me-2"></i>Kasa Giderleri</h6>
+                <div class="table-responsive mb-4 shadow-sm rounded border">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-danger">
+                            <tr><th>Gider</th><th>Tarih</th><th>Vardiya</th><th class="text-end">Tutar</th></tr>
+                        </thead>
+                        <tbody id="detOutBody"></tbody>
+                    </table>
+                </div>
+
+                <h6 class="fw-bold text-dark mb-2"><i class="bi bi-pin-angle-fill me-2"></i>Eklenen Sabit Giderler</h6>
+                <div class="table-responsive shadow-sm rounded border">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-warning">
+                            <tr><th>Sabit Gider </th><th class="text-end">Tutar</th></tr>
+                        </thead>
+                        <tbody id="detFixedBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Vardiya geçişlerini daha yumuşak hissettirmek için */
+    .table-warning {
+        background-color: #fff3cd !important;
+        color: #856404;
+    }
+
+    .btn-outline-info:hover {
+        color: #fff;
+    }
+</style>
+
+<script>
+             function showReportDetails(report) {
+        // Raporun kendi başlangıç ve bitiş tarihlerini Date objesine çevirelim
+        const reportStart = new Date(report.StartDate);
+        const reportEnd = new Date(report.EndDate);
+
+        // 1. Gelirler Dökümü - Sadece raporun tarihlerine uyanları filtrele
+        const filteredIncomes = (report.IncomeDetails || []).filter(i => {
+            const itemDate = new Date(i.Date);
+            return itemDate >= reportStart && itemDate <= reportEnd;
+        });
+
+        // 2. Giderler Dökümü - Sadece raporun tarihlerine uyanları filtrele
+        const filteredOutcomes = (report.OutcomeDetails || []).filter(o => {
+            const itemDate = new Date(o.Date);
+            return itemDate >= reportStart && itemDate <= reportEnd;
+        });
+
+        // Özetleri Göster
+        document.getElementById('detRev').innerText = report.TotalRevenue.toLocaleString('tr-TR') + " ₺";
+        document.getElementById('detExp').innerText = report.TotalExpenses.toLocaleString('tr-TR') + " ₺";
+        document.getElementById('detNet').innerText = report.NetTotal.toLocaleString('tr-TR') + " ₺";
+        document.getElementById('detNetBox').className = report.NetTotal < 0 ?
+            "p-3 rounded-3 text-center border bg-danger-subtle" :
+            "p-3 rounded-3 text-center border bg-success-subtle";
+
+        // Gelirler Tablosunu Doldur
+        const incBody = document.getElementById('detIncBody');
+        incBody.innerHTML = filteredIncomes.map(i => `
+            <tr>
+                <td>${i.IncomeName || 'Satış'}</td>
+                <td>${new Date(i.Date).toLocaleDateString('tr-TR')}</td>
+                <td>${i.ShiftType}</td>
+                <td class="text-end fw-bold text-success">+${i.IncomeAmount.toLocaleString('tr-TR')} ₺</td>
+            </tr>
+        `).join('') || '<tr><td colspan="4" class="text-center text-muted">Bu tarih aralığında gelir kaydı yok</td></tr>';
+
+        // Giderler Tablosunu Doldur
+        const outBody = document.getElementById('detOutBody');
+        outBody.innerHTML = filteredOutcomes.map(o => `
+            <tr>
+                <td>${o.OutcomeName || 'Harcama'}</td>
+                <td>${new Date(o.Date).toLocaleDateString('tr-TR')}</td>
+                <td>${o.ShiftType}</td>
+                <td class="text-end fw-bold text-danger">-${o.OutcomeAmount.toLocaleString('tr-TR')} ₺</td>
+            </tr>
+        `).join('') || '<tr><td colspan="4" class="text-center text-muted">Bu tarih aralığında gider kaydı yok</td></tr>';
+
+        // Sabit Giderler (Bunlar genelde tarih bağımsız, rapora direkt eklenenlerdir)
+        const fixBody = document.getElementById('detFixedBody');
+        fixBody.innerHTML = (report.SelectedCosts || []).map(f => `
+            <tr><td>${f.Name}</td><td class="text-end fw-bold">-${f.Amount.toLocaleString('tr-TR')} ₺</td></tr>
+        `).join('') || '<tr><td colspan="2" class="text-center text-muted">Sabit gider eklenmemiş</td></tr>';
+
+        new bootstrap.Modal(document.getElementById('reportDetailModal')).show();
+    }
+</script>

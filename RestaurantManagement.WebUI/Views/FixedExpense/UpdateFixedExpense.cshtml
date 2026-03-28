@@ -1,0 +1,52 @@
+﻿@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@model RestaaurantManagement.DtoLayer.Dtos.FixedExpenseDto.UpdateFixedExpense
+
+@{
+    ViewData["Title"] = "Gider Güncelle";
+    Layout = "~/Views/UIControler/Index.cshtml";
+    // Aktif vardiyayı alıyoruz
+    var activeShift = HttpContextAccessor.HttpContext.Session.GetString("ActiveShift") ?? "Gunduz";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-lg rounded-4">
+                <div class="card-header bg-success text-dark">
+                    <h5 class="mb-0 fw-bold text-center">
+                          Gider Düzenle
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="UpdateFixedExpense" method="post">
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" name="ShiftType" value="@activeShift" />
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Gider Adı</label>
+                            <input asp-for="Name" class="form-control border-primary" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tutar (₺)</label>
+                            <input asp-for="Amount" type="number" step="0.01" class="form-control fw-bold text-dark" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tarih</label>
+                            <input asp-for="Date" type="date" class="form-control" value="@Model.Date.ToString("yyyy-MM-dd")" required />
+                        </div>
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-success">
+                                Değişiklikleri Kaydet
+                            </button>
+                            <a asp-action="Index" class="btn btn-light py-2 fw-bold">İptal</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

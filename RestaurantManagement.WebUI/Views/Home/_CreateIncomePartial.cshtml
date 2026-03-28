@@ -1,0 +1,101 @@
+﻿@model RestaaurantManagement.DtoLayer.Dtos.IncomeDto.CreateInComeDto
+
+
+    <div class="card shadow-lg border-0 rounded-4">
+        <div class="card-header bg-success text-white rounded-top-4 py-3">
+            <h5 class="mb-0 fw-bold"><i class="bi bi-cash-stack me-2"></i> Yeni Gelir Ekle</h5>
+        </div>
+
+        <div class="card-body p-4">
+            <form asp-controller="Home" asp-action="CreateIncome" method="post" id="incomeForm">
+                <input type="hidden" asp-for="Date" value="@ViewBag.SelectedDate" />
+                @Html.AntiForgeryToken()
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-dark"><i class="bi bi-shop me-2 text-success"></i> Şirket / Kanal</label>
+                    <div class="input-group shadow-sm">
+                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-list-task text-success"></i></span>
+                        <select asp-for="SelectedCompany" id="SelectedCompany" class="form-select border-start-0 shadow-none" asp-items="ViewBag.Companies">
+                            <option value="">🏢 Şirket Yok</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-dark">Gelir Başlığı</label>
+                    <input asp-for="IncomeName" id="IncomeName" class="form-control shadow-sm" placeholder="Örn: Günlük Kasa" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-dark">Brüt Tutar (₺)</label>
+                    <div class="input-group shadow-sm">
+                        <span class="input-group-text bg-white text-success fw-bold">₺</span>
+                        <input asp-for="IncomeAmount" id="IncomeAmount" type="number" step="0.01" class="form-control fw-bold" value="0.00" />
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold  small">Hesaplanan Kesinti (₺)</label>
+                    <div class="input-group shadow-sm">
+                        <span class="input-group-text bg-light text-danger border-dashed"><i class="bi bi-scissors"></i></span>
+                        <input asp-for="IncomeDescription" id="IncomeDescription" type="number" step="0.01" class="form-control bg-light border-dashed text-danger fw-bold" readonly />
+                    </div>
+                    <div id="rateInfo" class="form-text text-muted ps-1 small"></div>
+                </div>
+
+                <button type="submit" class="btn btn-success w-100 py-2 fw-bold shadow-sm rounded-3">
+                    <i class="bi bi-check-circle me-2"></i> Kaydet
+                </button>
+            </form>
+        </div>
+    </div>
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function () {
+        function calculateCommission() {
+            var company = $('#SelectedCompany').val();
+            var rawAmount = parseFloat($('#IncomeAmount').val());
+            var $descBox = $('#IncomeDescription');
+            var $rateInfo = $('#rateInfo');
+
+            if (isNaN(rawAmount) || rawAmount <= 0) {
+                $descBox.val(0);
+                $rateInfo.text("");
+                return;
+            }
+
+            var kesinti = 0;
+            if (company === "YemekSepeti" || company === "Getir"  || company === "Trendyol") {
+                kesinti = rawAmount * 0.38;
+                $rateInfo.html("<span class='badge bg-danger text-white'>%38 Komisyon Uygulandı</span>");
+            } else if (company !== "") {
+                kesinti = rawAmount * 0.10;
+                $rateInfo.html("<span class='badge bg-warning text-white'>%10 Komisyon Uygulandı</span>");
+            } else {
+                kesinti = 0;
+                $rateInfo.text("Nakit girişi, kesinti yok.");
+            }
+
+            $descBox.val(kesinti.toFixed(2));
+        }
+
+        $('#SelectedCompany, #IncomeAmount').on('keyup change', calculateCommission);
+
+        $('#SelectedCompany').change(function () {
+            var selectedText = $(this).find("option:selected").text();
+            if ($(this).val() !== "") {
+                $('#IncomeName').val(selectedText + " Ödemesi");
+            } else {
+                $('#IncomeName').val("Günlük Kasa");
+            }
+        });
+    });
+</script>
+
+<style>
+    .border-dashed {
+        border-style: dashed !important;
+    }
+</style>

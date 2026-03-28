@@ -1,0 +1,6 @@
+@RestaurantManagement.CatalogMicroservice_HostAddress = http://localhost:5244
+
+GET {{RestaurantManagement.CatalogMicroservice_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
