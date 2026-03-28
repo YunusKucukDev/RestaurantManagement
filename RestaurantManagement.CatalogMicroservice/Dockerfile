@@ -1,31 +1,23 @@
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
-EXPOSE 8081
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
-# KRÝTÝK NOKTA: Klasör yollarýný senin görseline göre güncelledik
+# Dosyalarý GitHub'daki tam yollarýyla kopyalýyoruz
 COPY ["Services/Catalog/RestaurantManagement.CatalogMicroservice/RestaurantManagement.CatalogMicroservice.csproj", "Services/Catalog/RestaurantManagement.CatalogMicroservice/"]
-# DtoLayer'ýn yerini görseline göre "FrontEnd" altýnda belirledik (Ýsmindeki çift 'aa'ya dikkat!)
 COPY ["FrontEnd/RestaaurantManagement.DtoLayer/RestaaurantManagement.DtoLayer.csproj", "FrontEnd/RestaaurantManagement.DtoLayer/"]
 
-# Restore iþlemi
+# Restore komutu (Yolun doðruluðundan emin ol)
 RUN dotnet restore "Services/Catalog/RestaurantManagement.CatalogMicroservice/RestaurantManagement.CatalogMicroservice.csproj"
 
-# Tüm dosyalarý kopyala
 COPY . .
-
-# Build iþlemi için doðru klasöre gir
 WORKDIR "/src/Services/Catalog/RestaurantManagement.CatalogMicroservice"
-RUN dotnet build "./RestaurantManagement.CatalogMicroservice.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet build "RestaurantManagement.CatalogMicroservice.csproj" -c Release -o /app/build
 
 FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./RestaurantManagement.CatalogMicroservice.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "RestaurantManagement.CatalogMicroservice.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
