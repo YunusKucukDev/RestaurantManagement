@@ -8,6 +8,15 @@ using RestaurantManagement.WebUI.Services.OutcomeService;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// --- TÜRKÇE FORMAT AYARI EKLE ---
+var cultureInfo = new System.Globalization.CultureInfo("tr-TR");
+// Para birimi sembolünü zorla TL yap (Opsiyonel ama garanti olur)
+cultureInfo.NumberFormat.CurrencySymbol = "₺";
+
+System.Globalization.CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+// --------------------------------
+
 
 builder.Services.AddControllersWithViews();
 
@@ -56,6 +65,13 @@ builder.Services.AddHttpClient<AuthService>(client =>
 builder.Services.AddSession(); // Builder taraf�na
 
 var app = builder.Build();
+
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new Microsoft.AspNetCore.Localization.RequestCulture(cultureInfo),
+    SupportedCultures = new List<System.Globalization.CultureInfo> { cultureInfo },
+    SupportedUICultures = new List<System.Globalization.CultureInfo> { cultureInfo }
+});
 
 
 if (!app.Environment.IsDevelopment())
