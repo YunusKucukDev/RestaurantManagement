@@ -83,7 +83,7 @@ app.UseCors(opt =>
     opt.AllowAnyHeader()
        .AllowAnyMethod()
        .AllowCredentials()
-       .WithOrigins("http://localhost:7260", "http://localhost:7260"); 
+       .WithOrigins("https://restaurant-management-ui.onrender.com"); 
 });
 
 

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
+using RestaurantManagement.WebUI.Services.AccountService;
 using RestaurantManagement.WebUI.Services.DailyReportService;
 using RestaurantManagement.WebUI.Services.FinalReportService;
 using RestaurantManagement.WebUI.Services.FixedExpense;
@@ -24,11 +25,34 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
 builder.Services.AddSession(); // Token'ı geçici saklamak için
 
-builder.Services.AddHttpClient<IIncomeService, IncomeService>();
-builder.Services.AddHttpClient<IOutcomeService, OutcomeService>();
-builder.Services.AddHttpClient<IFixedExpenseService, FixedExpenseService>();
-builder.Services.AddHttpClient<IDailyReportService, DailyReportService>();
-builder.Services.AddHttpClient<IFinalReportService, FinalReportService>();
+// Appsettings'den URL'i bir kez oku
+var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"];
+
+builder.Services.AddHttpClient<IIncomeService, IncomeService>(client => {
+    client.BaseAddress = new Uri(apiBaseUrl);
+});
+
+builder.Services.AddHttpClient<IOutcomeService, OutcomeService>(client => {
+    client.BaseAddress = new Uri(apiBaseUrl);
+});
+
+builder.Services.AddHttpClient<IFixedExpenseService, FixedExpenseService>(client => {
+    client.BaseAddress = new Uri(apiBaseUrl);
+});
+
+builder.Services.AddHttpClient<IDailyReportService, DailyReportService>(client => {
+    client.BaseAddress = new Uri(apiBaseUrl);
+});
+
+builder.Services.AddHttpClient<IFinalReportService, FinalReportService>(client => {
+    client.BaseAddress = new Uri(apiBaseUrl);
+});
+
+builder.Services.AddHttpClient<AuthService>(client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl);
+});
+
 builder.Services.AddSession(); // Builder taraf�na
 
 var app = builder.Build();

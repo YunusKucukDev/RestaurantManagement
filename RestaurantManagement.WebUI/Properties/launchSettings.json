@@ -16,7 +16,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "dotnetRunMessages": true,
-      "applicationUrl": "https://localhost:7260;http://localhost:5241"
+      "applicationUrl": "https://restaurantmanagementwebui.onrender.com"
     },
     "IIS Express": {
       "commandName": "IISExpress",

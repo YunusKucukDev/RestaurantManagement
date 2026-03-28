@@ -1,4 +1,5 @@
 ﻿using RestaaurantManagement.DtoLayer.Dtos.OutcomeDto;
+using System.Net.Http.Json; // PostAsJsonAsync, GetFromJsonAsync vb. için
 
 namespace RestaurantManagement.WebUI.Services.OutcomeService
 {
@@ -12,24 +13,22 @@ namespace RestaurantManagement.WebUI.Services.OutcomeService
 
         public async Task CreateOutcomeDto(CreateOutcomeDto createOutcomeDto)
         {
-            await _httpClient.PostAsJsonAsync("https://localhost:7110/api/Outcomes", createOutcomeDto);
-
+            await _httpClient.PostAsJsonAsync("Outcomes", createOutcomeDto);
         }
 
         public async Task DeleteOutcomeDto(string id)
         {
-            await _httpClient.DeleteAsync($"https://localhost:7110/api/Outcomes/{id}");
+            await _httpClient.DeleteAsync($"Outcomes/{id}");
         }
 
         public async Task<List<ResultOutcomeDto>> GetOutcomesByShiftAsync(string shift)
         {
-            // API tarafındaki OutcomesController içinde yazdığımız endpoint'e istek atar
-            var responseMessage = await _httpClient.GetAsync($"https://localhost:7110/api/Outcomes/GetOutcomesByShift/{shift}");
+            var responseMessage = await _httpClient.GetAsync($"Outcomes/GetOutcomesByShift/{shift}");
 
             if (responseMessage.IsSuccessStatusCode)
             {
                 var values = await responseMessage.Content.ReadFromJsonAsync<List<ResultOutcomeDto>>();
-                return values;
+                return values ?? new List<ResultOutcomeDto>();
             }
 
             return new List<ResultOutcomeDto>();
@@ -37,20 +36,20 @@ namespace RestaurantManagement.WebUI.Services.OutcomeService
 
         public async Task<List<ResultOutcomeDto>> GetAllOutcomes()
         {
-            var values = await _httpClient.GetFromJsonAsync<List<ResultOutcomeDto>>("https://localhost:7110/api/Outcomes");
-            return values;
+            var values = await _httpClient.GetFromJsonAsync<List<ResultOutcomeDto>>("Outcomes");
+            return values ?? new List<ResultOutcomeDto>();
         }
 
         public async Task<UpdateOutComeDto> GetByIdAbotDto(string id)
         {
-            var values = await _httpClient.GetFromJsonAsync<UpdateOutComeDto>("https://localhost:7110/api/Outcomes");
+            // Burada ID parametresini URL'e eklemeyi unutmamalıyız:
+            var values = await _httpClient.GetFromJsonAsync<UpdateOutComeDto>($"Outcomes/{id}");
             return values;
         }
 
         public async Task UpdateOutcomeDto(UpdateOutComeDto updateOutcomeDto)
         {
-            await _httpClient.PutAsJsonAsync<UpdateOutComeDto>("https://localhost:7110/api/Outcomes", updateOutcomeDto);
+            await _httpClient.PutAsJsonAsync("Outcomes", updateOutcomeDto);
         }
-    
     }
 }
